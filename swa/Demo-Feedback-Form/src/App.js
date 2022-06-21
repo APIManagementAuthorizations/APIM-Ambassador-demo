@@ -40,7 +40,7 @@ function App() {
 
       await axios.post(`/api/github-gql`, data).then((response) => {
         console.log(response);
-        setCommentUrl(response.data.addDiscussionComment.comment.url);
+        setCommentUrl(response.data.data.addDiscussionComment.comment.url);
         setLoaded(true);
         setSuccess(true);
       });
