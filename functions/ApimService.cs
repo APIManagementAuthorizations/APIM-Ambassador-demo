@@ -1,9 +1,7 @@
 using System;
 using System.Linq;
 using System.Net.Http;
-using System.Net.Http.Headers;
 using System.Threading.Tasks;
-// using Google.Apis.Gmail.v1.Data;
 using GraphQL;
 using GraphQL.Client.Http;
 using GraphQL.Client.Serializer.Newtonsoft;
@@ -17,6 +15,7 @@ namespace MyAmbassadorDemo.Function
         private readonly string _baseUrl;
         private readonly string _subscriptionKey;
         private readonly HttpClient _httpClient;
+        private readonly GraphQLHttpClient _githubGraphQLClient;
 
         public ApimService(string baseUrl, string subscriptionKey, string identityToken = null)
         {
@@ -24,13 +23,14 @@ namespace MyAmbassadorDemo.Function
             _subscriptionKey = subscriptionKey;
             _httpClient = new HttpClient();
             _httpClient.DefaultRequestHeaders.Add("Ocp-Apim-Subscription-Key", subscriptionKey);
-            // _httpClient.DefaultRequestHeaders.Add("Authorization", identityToken);
+            _githubGraphQLClient = new GraphQLHttpClient(_baseUrl + "/api/github-gql", new NewtonsoftJsonSerializer());
+            _githubGraphQLClient.HttpClient.DefaultRequestHeaders.Add("Ocp-Apim-Subscription-Key", _subscriptionKey);
         }
 
         public async Task<string> GetTokenBackAsync(string providerId, string authorizationId)
         {
-            var endpoint = $"{_baseUrl}/token-store/fetch?provider-id={providerId}&authorization-id={authorizationId}";
-            var response = await _httpClient.GetAsync(endpoint);
+            var endpoint = $"{_baseUrl}/tokenstore/fetch?authorizationProviderId={providerId}&authorizationId={authorizationId}";
+            var response = await _httpClient.PostAsync(endpoint, null);
             var content = await response.Content.ReadAsStringAsync();
             if (!response.IsSuccessStatusCode)
             {
@@ -39,17 +39,14 @@ namespace MyAmbassadorDemo.Function
             return content;
         }
 
-        public async Task<GithubDiscussionComment[]> ListCommentOfDiscussionAsync() 
+        public async Task<GithubDiscussionComment[]> ListDiscussionCommentsAsync() 
         {
-            var githubGraphQLClient = new GraphQLHttpClient(_baseUrl + "/api/github-gql", new NewtonsoftJsonSerializer());
-            githubGraphQLClient.HttpClient.DefaultRequestHeaders.Add("Ocp-Apim-Subscription-Key", _subscriptionKey);
-
             var request = new GraphQLRequest() {
                 Query = @"
 query {
 	repository(name: ""APIM-Ambassador-demo"", owner: ""APIManagementAuthorizations"") {
 		discussion(number: 1) {
-			comments(last: 10) {
+			comments(last: 100) {
 				nodes {
 					author {
 						login
@@ -65,9 +62,21 @@ query {
 }
 "
             };
-            var response = await githubGraphQLClient.SendQueryAsync<JObject>(request);
+            var response = await _githubGraphQLClient.SendQueryAsync<JObject>(request);
             var comments = response.Data["repository"]["discussion"]["comments"]["nodes"].ToObject<GithubDiscussionComment[]>();
             return comments;
+        }
+
+        
+        public async Task<bool> PostDiscussionCommentAsync(string[] aliases) 
+        {
+            var body = string.Join(',', aliases);
+            var query = $"mutation {{ addDiscussionComment(input: {{ body: \"{body}, Thanks for giving feedback!\", discussionId: \"D_kwDOHiNKns4AP3wj\" }}) {{comment {{ url }} }} }}";
+            var request = new GraphQLRequest() {
+                Query = query
+            };
+            var response = await _githubGraphQLClient.SendQueryAsync<JObject>(request);
+            return true;
         }
     }
 }

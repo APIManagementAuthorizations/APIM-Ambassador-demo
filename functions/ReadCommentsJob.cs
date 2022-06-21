@@ -1,10 +1,8 @@
 
 
 using System;
+using System.Linq;
 using System.Threading.Tasks;
-using GraphQL;
-using GraphQL.Client.Http;
-using Newtonsoft.Json.Linq;
 
 namespace MyAmbassadorDemo.Function
 {
@@ -16,7 +14,13 @@ namespace MyAmbassadorDemo.Function
     }
 
     public async Task RunAsync() {
-        var comments = await _apimService.ListCommentOfDiscussionAsync();
+        var comments = await _apimService.ListDiscussionCommentsAsync();
+        var newComments = comments.Where(c => c.CreatedAt > DateTimeOffset.UtcNow.AddSeconds(-10)).ToArray();
+
+        if (newComments.Any()) {
+          var aliases = newComments.Where(c => c.Body.Contains(" - ")).Select(c => c.Body.Split(" - ")[0]).ToArray();
+          var result = await _apimService.PostDiscussionCommentAsync(aliases);
+        }
     }
   }
 }
