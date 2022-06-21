@@ -29,7 +29,7 @@ function App() {
 
       var data = JSON.stringify({
         query: `mutation {
-        addDiscussionComment(input: { body: ${alias}: ${comment}, discussionId: ${process.env.discussionId} }) {
+        addDiscussionComment(input: { body: "${alias} - ${comment}", discussionId: "${process.env.discussionId}" }) {
           comment {
             url
           }
@@ -40,7 +40,7 @@ function App() {
 
       await axios.post(`/api/github-gql`, data).then((response) => {
         console.log(response);
-        setCommentUrl(response.data.comment.url);
+        setCommentUrl(response.data.addDiscussionComment.comment.url);
         setLoaded(true);
         setSuccess(true);
       });
