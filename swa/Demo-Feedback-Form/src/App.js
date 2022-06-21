@@ -29,7 +29,7 @@ function App() {
 
       var data = JSON.stringify({
         query: `mutation {
-        addDiscussionComment(input: { body: "${alias} - ${comment}", discussionId: "${process.env.discussionId}" }) {
+        addDiscussionComment(input: { body: "${alias} - ${comment}", discussionId: "${process.env.DiscussionID}" }) {
           comment {
             url
           }
