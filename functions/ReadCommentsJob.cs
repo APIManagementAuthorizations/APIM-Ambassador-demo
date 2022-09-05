@@ -10,7 +10,7 @@ namespace MyAmbassadorDemo.Function
     private ApimService _apimService;
 
     public ReadCommentsJob() {
-      _apimService = new ApimService("https://seaki-tokenstore-demo.azure-api.net", "");
+      _apimService = new ApimService("https://apim-nibarras.azure-api.net", "");
     }
 
     public async Task RunAsync() {
