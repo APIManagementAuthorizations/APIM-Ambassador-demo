@@ -44,7 +44,7 @@ namespace MyAmbassadorDemo.Function
             var request = new GraphQLRequest() {
                 Query = @"
 query {
-	repository(name: ""APIM-Ambassador-demo"", owner: ""APIManagementAuthorizations"") {
+	repository(name: ""APIM-Ambassador-demo"", owner: ""nbarrasson"") {
 		discussion(number: 1) {
 			comments(last: 100) {
 				nodes {
